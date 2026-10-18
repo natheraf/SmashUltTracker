@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import crypto from 'node:crypto';
 import { z } from 'zod';
 import { requireApprovedUser, requirePermission, requireUser } from '../auth.js';
 import { nowIso } from '../db.js';
@@ -106,7 +107,19 @@ function startActiveContext(db, streamerId, at = nowIso()) {
 
 function trackerState(db, streamerId) {
   const now = Date.now();
-  const ts = getTrackerSession(db, streamerId);
+  let ts = getTrackerSession(db, streamerId);
+  // The overlay token is a capability URL for OBS; mint it lazily. This also
+  // creates the tracker_sessions row for a brand-new account.
+  if (!ts?.overlay_token) {
+    const token = crypto.randomBytes(18).toString('base64url');
+    db.prepare(
+      `INSERT INTO tracker_sessions (streamer_id, overlay_token, updated_at)
+       VALUES (?, ?, ?)
+       ON CONFLICT(streamer_id) DO UPDATE SET
+         overlay_token = COALESCE(tracker_sessions.overlay_token, excluded.overlay_token)`,
+    ).run(streamerId, token, new Date(now).toISOString());
+    ts = getTrackerSession(db, streamerId);
+  }
   const mode = ts?.active_mode || 'streak';
   const selectedId = ts?.selected_character_id || null;
   const streaks = db
@@ -118,6 +131,12 @@ function trackerState(db, streamerId) {
     .all(streamerId)
     .map((row) => streakView(db, row, now));
   const active = selectedId ? streaks.find((s) => s.character_id === selectedId) || null : null;
+  const completions = db
+    .prepare(
+      `SELECT character_id, completed_at, duration_seconds, attempts_count
+       FROM completions WHERE streamer_id = ? ORDER BY completed_at`,
+    )
+    .all(streamerId);
   const run = db
     .prepare("SELECT * FROM ironman_runs WHERE streamer_id = ? AND status = 'active'")
     .get(streamerId);
@@ -131,11 +150,14 @@ function trackerState(db, streamerId) {
     zero_window_seconds: Math.floor(ZERO_WINDOW_MS / 1000),
     in_progress: isStreamerInProgress(db, streamerId, now),
     streaks,
+    completions,
+    active_attempt: active ? attemptsSoFar(db, streamerId, active.character_id) : null,
     active_streak: active,
     ironman: run
       ? { id: run.id, started_at: run.started_at, accumulated_seconds: run.accumulated_seconds, running: Boolean(run.running_since), paused: Boolean(run.paused) }
       : null,
     overlay_token_set: Boolean(ts?.overlay_token),
+    overlay_token: ts?.overlay_token || null,
   };
 }
 
@@ -463,6 +485,22 @@ export function trackerRoutes(db) {
       touchHeartbeat(db, req.user.id, at);
       broadcast('tracker', { streamerId: req.user.id });
       res.json({ ok: true, state: trackerState(db, req.user.id) });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  router.post('/overlay/regenerate', (req, res, next) => {
+    try {
+      const at = nowIso();
+      touchHeartbeat(db, req.user.id, at);
+      const token = crypto.randomBytes(18).toString('base64url');
+      db.prepare('UPDATE tracker_sessions SET overlay_token = ?, updated_at = ? WHERE streamer_id = ?').run(
+        token,
+        at,
+        req.user.id,
+      );
+      res.json({ ok: true, overlay_token: token });
     } catch (err) {
       next(err);
     }

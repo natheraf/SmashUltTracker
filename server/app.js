@@ -9,7 +9,10 @@ import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
 import { authRoutes } from './routes/auth.js';
 import { adminRoutes } from './routes/admin.js';
 import { trackerRoutes } from './routes/tracker.js';
+import { overlayRoutes } from './routes/overlay.js';
 import { sseRoutes } from './routes/sse.js';
+
+const IMAGE_FILE = /^[a-z0-9-]+\.png$/;
 
 export function createApp({ db, config }) {
   const app = express();
@@ -20,11 +23,11 @@ export function createApp({ db, config }) {
       contentSecurityPolicy: {
         directives: {
           defaultSrc: ["'self'"],
-          scriptSrc: ["'self'"],
+          scriptSrc: ["'self'", 'https://challenges.cloudflare.com'],
           styleSrc: ["'self'", "'unsafe-inline'"],
-          imgSrc: ["'self'", 'data:'],
-          connectSrc: ["'self'"],
-          frameSrc: ["'self'", 'https://www.youtube-nocookie.com'],
+          imgSrc: ["'self'", 'data:', 'https://i.ytimg.com'],
+          connectSrc: ["'self'", 'https://challenges.cloudflare.com'],
+          frameSrc: ["'self'", 'https://www.youtube-nocookie.com', 'https://challenges.cloudflare.com'],
           objectSrc: ["'none'"],
           baseUri: ["'self'"],
           formAction: ["'self'"],
@@ -55,9 +58,36 @@ export function createApp({ db, config }) {
     });
   });
 
+  // Public client config (no secrets).
+  app.get('/api/config', (req, res) => {
+    res.json({
+      turnstile_site_key: config.turnstileSiteKey,
+      overlay_origin: null,
+    });
+  });
+
+  // Character head icons, served from the data volume. The filename is checked
+  // against the roster so a crafted path can never escape the images dir.
+  const imagesDir = path.join(config.dataDir, 'images');
+  app.get('/api/images/:file', (req, res) => {
+    const file = req.params.file;
+    if (!IMAGE_FILE.test(file)) return res.status(404).json({ error: 'not_found' });
+    const slug = file.slice(0, -4);
+    const known = db.prepare('SELECT 1 AS ok FROM characters WHERE slug = ?').get(slug);
+    if (!known) return res.status(404).json({ error: 'not_found' });
+    const filePath = path.join(imagesDir, file);
+    if (!fs.existsSync(filePath)) {
+      // Missing download — the client falls back to a name tile.
+      return res.status(404).json({ error: 'image_missing', message: 'Run npm run fetch-images' });
+    }
+    res.set('Cache-Control', 'public, max-age=604800, immutable');
+    res.sendFile(filePath);
+  });
+
   app.use('/api/auth', authRoutes(db, config));
   app.use('/api/admin', adminRoutes(db, config));
   app.use('/api/tracker', trackerRoutes(db));
+  app.use('/api/overlay', overlayRoutes(db));
   app.use('/api', sseRoutes());
 
   app.use('/api', notFoundHandler);
