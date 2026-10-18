@@ -1,6 +1,9 @@
 import { renderToString } from 'react-dom/server';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { describe, expect, it } from 'vitest';
+import CharacterGrid from '../src/components/CharacterGrid.jsx';
+import { IronmanCard, StreakCard } from '../src/components/home/LiveCards.jsx';
+import Timeline from '../src/components/home/Timeline.jsx';
 import IronmanPanel from '../src/components/tracker/IronmanPanel.jsx';
 import Overlay from '../src/pages/Overlay.jsx';
 
@@ -126,5 +129,83 @@ describe('Overlay', () => {
   it('mounts on the token route before its first fetch resolves', () => {
     const html = renderRoute('/overlay/tok123', <Overlay />);
     expect(html).toContain('overlay-root');
+  });
+});
+
+describe('home page pieces', () => {
+  const streakCard = {
+    streamer_id: 1,
+    display_name: 'Nai',
+    youtube_url: 'https://www.youtube.com/@nai',
+    twitch_url: 'https://twitch.tv/nai',
+    character: { id: 4, slug: 'samus', name: 'Samus' },
+    wins: 3,
+    target: 50,
+    elapsed_seconds: 754,
+    running: false,
+    paused: false,
+  };
+
+  it('renders a live streak card with its timer and channel links', () => {
+    const html = plain(render(<StreakCard card={streakCard} />));
+    expect(html).toContain('Nai');
+    expect(html).toContain('Samus');
+    expect(html).toContain('3');
+    expect(html).toContain('/ 50 wins');
+    expect(html).toContain('12:34');
+    expect(html).toContain('twitch.tv/nai');
+    expect(html).toContain('aria-label="Nai on YouTube"');
+  });
+
+  it('renders an Ironman card with the drawn fighter and progress', () => {
+    const html = plain(
+      render(
+        <IronmanCard
+          card={{
+            streamer_id: 2,
+            display_name: 'Nai',
+            youtube_url: null,
+            twitch_url: 'https://twitch.tv/nai',
+            run_id: 9,
+            drawn: { id: 1, slug: 'mario', name: 'Mario' },
+            won: 2,
+            total: 86,
+            elapsed_seconds: 60,
+            running: true,
+            paused: false,
+          }}
+        />,
+      ),
+    );
+    expect(html).toContain('Ironman');
+    expect(html).toContain('Mario');
+    expect(html).toContain('/ 86');
+    expect(html).toContain('fighters won');
+  });
+
+  it('shows the timeline loading state before its first fetch resolves', () => {
+    expect(render(<Timeline />)).toContain('Loading');
+  });
+
+  it('marks completed, partial and selected fighters without a toolbar', () => {
+    const characters = [
+      { id: 1, slug: 'mario', name: 'Mario', series: 'Super Mario', select_order: 1 },
+      { id: 2, slug: 'samus', name: 'Samus', series: 'Metroid', select_order: 4 },
+    ];
+    const html = render(
+      <CharacterGrid
+        characters={characters}
+        streaks={[{ character_id: 2, wins: 12 }]}
+        completed={new Set([1])}
+        selectedId={2}
+        onSelect={() => {}}
+        toolbar={false}
+        showTarget
+      />,
+    );
+    expect(html).toContain('12/50');
+    expect(html).toContain('char-cell is-completed');
+    expect(html).toContain('is-selected');
+    expect(html).not.toContain('char-picker-toolbar');
   });
 });

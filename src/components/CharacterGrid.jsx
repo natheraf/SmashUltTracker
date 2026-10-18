@@ -4,7 +4,8 @@ import CharacterImage from './CharacterImage.jsx';
 /**
  * The character picker, laid out like Ultimate's select screen: 13 columns per
  * row (the last row has 8), following the seed's fighter-number order with Mii
- * Fighters at the end. Omit `onSelect` for a read-only display (home page).
+ * Fighters at the end. `onSelect` makes the cells clickable; `toolbar` (on by
+ * default when `onSelect` is set) adds the search box and completed filter.
  */
 export default function CharacterGrid({
   characters,
@@ -12,6 +13,10 @@ export default function CharacterGrid({
   completed = new Set(),
   selectedId = null,
   onSelect = null,
+  // Read-only pages (home) still want clickable cells, just no picker toolbar.
+  toolbar = Boolean(onSelect),
+  // The tracker grid stays compact; the home grid spells out "12/50".
+  showTarget = false,
   dense = false,
 }) {
   const [query, setQuery] = useState('');
@@ -33,7 +38,7 @@ export default function CharacterGrid({
 
   return (
     <div className="char-picker">
-      {onSelect ? (
+      {toolbar ? (
         <div className="char-picker-toolbar">
           <input
             type="search"
@@ -81,7 +86,7 @@ export default function CharacterGrid({
                 <i style={{ width: `${(wins / 50) * 100}%` }} />
               </span>
               {wins > 0 && !isCompleted ? (
-                <span className="char-cell-wins">{wins}</span>
+                <span className="char-cell-wins">{showTarget ? `${wins}/50` : wins}</span>
               ) : null}
               {isCompleted ? (
                 <span className="char-check" aria-hidden="true">
@@ -108,7 +113,7 @@ export default function CharacterGrid({
           );
         })}
       </div>
-      {onSelect && visible.length === 0 ? <p className="muted">No fighters match.</p> : null}
+      {toolbar && visible.length === 0 ? <p className="muted">No fighters match.</p> : null}
     </div>
   );
 }

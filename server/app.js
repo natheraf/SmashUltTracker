@@ -11,6 +11,7 @@ import { adminRoutes } from './routes/admin.js';
 import { trackerRoutes } from './routes/tracker.js';
 import { ironmanRoutes } from './routes/ironman.js';
 import { overlayRoutes } from './routes/overlay.js';
+import { publicRoutes } from './routes/public.js';
 import { sseRoutes } from './routes/sse.js';
 
 const IMAGE_FILE = /^[a-z0-9-]+\.png$/;
@@ -85,6 +86,7 @@ export function createApp({ db, config }) {
     res.sendFile(filePath);
   });
 
+  app.use('/api', publicRoutes(db));
   app.use('/api/auth', authRoutes(db, config));
   app.use('/api/admin', adminRoutes(db, config));
   app.use('/api/tracker', trackerRoutes(db));
