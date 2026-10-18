@@ -1,3 +1,4 @@
+import { activeRun, runView } from './ironman.js';
 import { elapsedSeconds, isStreamerInProgress } from './timers.js';
 
 /**
@@ -51,31 +52,21 @@ export function buildOverlayState(db, streamerId, now = Date.now()) {
     };
   }
 
-  // Ironman — phase 4 fills in entries; the frame is useful to OBS already.
-  const run = db
-    .prepare("SELECT * FROM ironman_runs WHERE streamer_id = ? AND status = 'active'")
-    .get(streamerId);
-  const entries = run
-    ? db
-        .prepare(
-          `SELECT ie.*, c.slug, c.name FROM ironman_entries ie
-           JOIN characters c ON c.id = ie.character_id
-           WHERE ie.run_id = ? ORDER BY COALESCE(ie.draw_order, 999999), ie.id`,
-        )
-        .all(run.id)
-    : [];
+  // Ironman: the overlay shows the current draw, the win count and the deck.
+  const run = activeRun(db, streamerId);
+  const view = runView(db, run, now);
+  if (!view) {
+    return { ...base, run: null, drawn: null, won: 0, total: 0, elapsed_seconds: 0, running: false, paused: false, entries: [] };
+  }
   return {
     ...base,
-    run: run ? { started_at: run.started_at, status: run.status } : null,
-    elapsed_seconds: run ? elapsedSeconds(run, now) : 0,
-    running: Boolean(run?.running_since),
-    paused: Boolean(run?.paused),
-    entries: entries.map((e) => ({
-      slug: e.slug,
-      name: e.name,
-      status: e.status,
-      imported: Boolean(e.imported),
-    })),
-    won: entries.filter((e) => e.status === 'won').length,
+    run: { id: view.id, started_at: view.started_at, status: view.status },
+    drawn: view.current_draw ? { slug: view.current_draw.slug, name: view.current_draw.name } : null,
+    elapsed_seconds: view.elapsed_seconds,
+    running: view.running,
+    paused: view.paused,
+    won: view.won_count,
+    total: view.total,
+    entries: view.entries.map((entry) => ({ slug: entry.slug, name: entry.name, status: entry.status })),
   };
 }

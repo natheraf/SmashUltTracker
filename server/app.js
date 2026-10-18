@@ -9,6 +9,7 @@ import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
 import { authRoutes } from './routes/auth.js';
 import { adminRoutes } from './routes/admin.js';
 import { trackerRoutes } from './routes/tracker.js';
+import { ironmanRoutes } from './routes/ironman.js';
 import { overlayRoutes } from './routes/overlay.js';
 import { sseRoutes } from './routes/sse.js';
 
@@ -87,6 +88,7 @@ export function createApp({ db, config }) {
   app.use('/api/auth', authRoutes(db, config));
   app.use('/api/admin', adminRoutes(db, config));
   app.use('/api/tracker', trackerRoutes(db));
+  app.use('/api/tracker/ironman', ironmanRoutes(db));
   app.use('/api/overlay', overlayRoutes(db));
   app.use('/api', sseRoutes());
 

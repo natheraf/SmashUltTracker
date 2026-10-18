@@ -748,3 +748,123 @@ html.overlay-route #root {
   gap: 0.5rem;
 }
 
+
+/* ---------------------------------------------------------------------------
+   Phase 4 — Ironman: draft portrait, deck tiles and run history
+--------------------------------------------------------------------------- */
+
+.ironman-rules {
+  margin: 0 0 1rem;
+  padding-left: 1.1rem;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+.ironman-rules li {
+  margin: 2px 0;
+}
+
+.ironman-draw {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 1rem;
+  align-items: center;
+}
+.ironman-portrait img,
+.ironman-portrait .char-fallback {
+  border-radius: var(--radius-sm);
+  background: #0e1119;
+}
+.ironman-question {
+  display: grid;
+  place-items: center;
+  width: 132px;
+  height: 132px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+  background: #0e1119;
+  color: var(--text-muted);
+  font-size: 56px;
+  font-weight: 700;
+}
+.ironman-draw-text {
+  min-width: 0;
+}
+.ironman-draw-text h2 {
+  margin: 0 0 0.15rem;
+}
+
+.ironman-deck-title {
+  margin: 1.25rem 0 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+.ironman-deck {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.ironman-tile {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: #0e1119;
+  line-height: 0;
+  overflow: hidden;
+}
+.ironman-tile img,
+.ironman-tile .char-fallback {
+  display: block;
+  border-radius: 0;
+}
+.ironman-tile.is-won {
+  border-color: color-mix(in srgb, var(--success) 60%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--success) 25%, transparent) inset;
+}
+.ironman-tile.is-drawn {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 35%, transparent);
+}
+.ironman-tile.is-lost {
+  border-color: color-mix(in srgb, var(--danger) 60%, transparent);
+  opacity: 0.55;
+}
+
+.ironman-history {
+  margin-top: 1.5rem;
+  border-top: 1px solid var(--border);
+  padding-top: 0.75rem;
+}
+.ironman-history h3 {
+  margin: 0 0 0.4rem;
+  font-size: 0.95rem;
+}
+.ironman-history ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.35rem;
+}
+.ironman-history li {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  font-size: 14px;
+}
+
+.badge-idle {
+  color: var(--text-muted);
+  border-color: var(--border);
+}
+
+@media (max-width: 720px) {
+  .ironman-draw {
+    grid-template-columns: auto 1fr;
+  }
+  .ironman-draw .streak-timer {
+    grid-column: 1 / -1;
+  }
+}

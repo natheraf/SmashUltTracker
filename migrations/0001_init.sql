@@ -115,7 +115,8 @@ CREATE TABLE ironman_runs (
   accumulated_seconds INTEGER NOT NULL DEFAULT 0,
   running_since      TEXT,
   paused             INTEGER NOT NULL DEFAULT 0,
-  zero_since         TEXT
+  zero_since         TEXT,
+  updated_at         TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
 );
 CREATE INDEX idx_ironman_streamer ON ironman_runs(streamer_id, status);
 

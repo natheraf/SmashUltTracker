@@ -15,6 +15,7 @@ export default function Tracker() {
   const { state, error, busy, act, refresh } = useTrackerState(user?.id);
   const [characters, setCharacters] = useState([]);
   const [celebration, setCelebration] = useState(null);
+  const [ironmanDone, setIronmanDone] = useState(null);
 
   useEffect(() => {
     api('/api/characters')
@@ -83,7 +84,7 @@ export default function Tracker() {
               onCelebrate={setCelebration}
             />
           ) : (
-            <IronmanPanel state={state} act={act} busy={busy} />
+            <IronmanPanel state={state} act={act} busy={busy} onComplete={setIronmanDone} />
           )}
           <OverlayLink token={state.overlay_token} onRegenerated={refresh} />
         </div>
@@ -104,6 +105,24 @@ export default function Tracker() {
           />
         </div>
       </div>
+
+      {ironmanDone ? (
+        <Dialog
+          title="Ironman complete!"
+          onClose={() => setIronmanDone(null)}
+          footer={
+            <button type="button" className="btn btn-primary" onClick={() => setIronmanDone(null)}>
+              Nice
+            </button>
+          }
+        >
+          <p>
+            Beaten a game with every one of the {characters.length || 86} fighters
+            {ironmanDone.name ? `, finishing on ${ironmanDone.name}` : ''}. That one goes in the
+            history books.
+          </p>
+        </Dialog>
+      ) : null}
 
       {celebration ? (
         <Dialog

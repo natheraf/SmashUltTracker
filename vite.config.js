@@ -15,7 +15,7 @@ export default defineConfig({
   },
   test: {
     environment: 'node',
-    include: ['tests/**/*.test.js'],
+    include: ['tests/**/*.test.{js,jsx}'],
     // The server reads env at import time in some tests; give them the test env.
     env: {
       NODE_ENV: 'test',

@@ -75,14 +75,19 @@ export default function Overlay() {
     <div className="overlay-root">
       <div className={`overlay-card ${state.in_progress ? 'is-live' : 'is-idle'}`}>
         <div className="overlay-char">
-          {state.character ? (
+          {streakMode && state.character ? (
             <CharacterImage slug={state.character.slug} name={state.character.name} size={104} />
+          ) : null}
+          {!streakMode && state.drawn ? (
+            <CharacterImage slug={state.drawn.slug} name={state.drawn.name} size={104} />
           ) : null}
         </div>
         <div className="overlay-body">
           <div className="overlay-top">
             <span className="overlay-name">
-              {streakMode ? state.character?.name || 'No fighter selected' : 'Ironman'}
+              {streakMode
+                ? state.character?.name || 'No fighter selected'
+                : state.drawn?.name || 'Ironman — no draw yet'}
             </span>
             {state.in_progress ? (
               <span className="badge badge-live">live</span>
@@ -122,12 +127,18 @@ export default function Overlay() {
             <>
               <div className="overlay-wins">
                 <strong>{state.won || 0}</strong>
-                <span>/{state.entries?.length || 0} won</span>
-                <span className="overlay-timer mono">{formatDuration(elapsed)}</span>
+                <span>/{state.total || 86} won</span>
+                <span className={`overlay-timer mono ${state.running ? 'is-running' : ''}`}>
+                  {formatDuration(elapsed)}
+                </span>
+              </div>
+              <div className="overlay-bar">
+                <i style={{ width: `${((state.won || 0) / (state.total || 86)) * 100}%` }} />
               </div>
               <div className="overlay-foot">
-                <span>Ironman</span>
+                <span>{state.drawn ? 'win it or lose the run' : 'waiting for the draw'}</span>
                 {state.paused ? <span>paused</span> : null}
+                <span>Ironman</span>
               </div>
             </>
           )}

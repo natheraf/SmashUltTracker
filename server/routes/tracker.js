@@ -5,6 +5,7 @@ import { requireApprovedUser, requirePermission, requireUser } from '../auth.js'
 import { nowIso } from '../db.js';
 import { badRequest } from '../errors.js';
 import { broadcast } from '../services/bus.js';
+import { activeRun, runHistory, runView } from '../services/ironman.js';
 import { addTimelineEvent } from '../services/timeline.js';
 import {
   checkMilestones,
@@ -105,7 +106,7 @@ function startActiveContext(db, streamerId, at = nowIso()) {
   }
 }
 
-function trackerState(db, streamerId) {
+export function trackerState(db, streamerId) {
   const now = Date.now();
   let ts = getTrackerSession(db, streamerId);
   // The overlay token is a capability URL for OBS; mint it lazily. This also
@@ -137,9 +138,7 @@ function trackerState(db, streamerId) {
        FROM completions WHERE streamer_id = ? ORDER BY completed_at`,
     )
     .all(streamerId);
-  const run = db
-    .prepare("SELECT * FROM ironman_runs WHERE streamer_id = ? AND status = 'active'")
-    .get(streamerId);
+  const run = activeRun(db, streamerId);
   return {
     server_time: new Date(now).toISOString(),
     mode,
@@ -153,9 +152,8 @@ function trackerState(db, streamerId) {
     completions,
     active_attempt: active ? attemptsSoFar(db, streamerId, active.character_id) : null,
     active_streak: active,
-    ironman: run
-      ? { id: run.id, started_at: run.started_at, accumulated_seconds: run.accumulated_seconds, running: Boolean(run.running_since), paused: Boolean(run.paused) }
-      : null,
+    ironman: runView(db, run, now),
+    ironman_history: runHistory(db, streamerId),
     overlay_token_set: Boolean(ts?.overlay_token),
     overlay_token: ts?.overlay_token || null,
   };
