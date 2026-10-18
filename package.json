@@ -1,0 +1,42 @@
+{
+  "name": "smash-ult-tracker",
+  "version": "1.0.0",
+  "description": "Community tracker for nairomk's 50-win streak and Ironman challenges in Super Smash Bros. Ultimate",
+  "type": "module",
+  "private": true,
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "concurrently -k -n server,client \"npm:dev:server\" \"npm:dev:client\"",
+    "dev:server": "node --watch server/index.js",
+    "dev:client": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "start": "node server/index.js",
+    "migrate": "node scripts/migrate.mjs",
+    "fetch-images": "node scripts/fetch-images.mjs",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@resvg/resvg-js": "^2.6.2",
+    "bcryptjs": "^3.0.3",
+    "better-sqlite3": "^12.11.1",
+    "cookie": "^1.0.2",
+    "express": "^4.21.2",
+    "express-rate-limit": "^8.7.1",
+    "helmet": "^8.3.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.30.6",
+    "satori": "^0.62.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
+    "concurrently": "^10.0.6",
+    "vite": "^6.4.4",
+    "vitest": "^3.2.7"
+  }
+}

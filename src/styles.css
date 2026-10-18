@@ -1,0 +1,236 @@
+/* Design system — dark only. One accent color, system fonts, subtle cards. */
+
+:root {
+  color-scheme: dark;
+  --bg: #0b0d12;
+  --bg-elevated: #12151d;
+  --card: #161a24;
+  --card-hover: #1c2130;
+  --border: #262c3a;
+  --border-strong: #39415433;
+  --text: #e8ebf2;
+  --text-muted: #9aa3b5;
+  --accent: #4f8cff;
+  --accent-hover: #6ba0ff;
+  --accent-contrast: #08101f;
+  --success: #3ecf8e;
+  --danger: #ff5d6c;
+  --warning: #ffb020;
+  --radius: 10px;
+  --radius-sm: 6px;
+  --shadow: 0 4px 24px rgb(0 0 0 / 45%);
+  --font:
+    system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+a:hover {
+  color: var(--accent-hover);
+}
+
+h1,
+h2,
+h3 {
+  line-height: 1.2;
+  margin: 0 0 0.5rem;
+}
+
+.page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 4rem;
+}
+
+.muted {
+  color: var(--text-muted);
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.btn:hover:not(:disabled) {
+  background: var(--card-hover);
+}
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.btn-primary {
+  background: var(--accent);
+  border-color: transparent;
+  color: var(--accent-contrast);
+}
+.btn-primary:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+.btn-danger {
+  border-color: color-mix(in srgb, var(--danger) 50%, transparent);
+  color: var(--danger);
+}
+.btn-sm {
+  padding: 0.25rem 0.6rem;
+  font-size: 0.85rem;
+}
+
+/* Forms */
+label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+  color: var(--text-muted);
+}
+input,
+select,
+textarea {
+  width: 100%;
+  padding: 0.55rem 0.7rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  color: var(--text);
+  font: inherit;
+}
+input:focus,
+select:focus,
+textarea:focus {
+  outline: 2px solid color-mix(in srgb, var(--accent) 60%, transparent);
+  outline-offset: 1px;
+  border-color: var(--accent);
+}
+.field {
+  margin-bottom: 0.9rem;
+}
+
+/* Cards */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+}
+.badge-live {
+  color: var(--success);
+  border-color: color-mix(in srgb, var(--success) 45%, transparent);
+}
+.badge-live::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--success);
+  animation: pulse 1.6s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+/* Dialogs */
+.dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgb(0 0 0 / 65%);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 2rem 1rem;
+  z-index: 100;
+  overflow-y: auto;
+}
+.dialog {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  width: 100%;
+  max-width: 480px;
+  padding: 1.25rem;
+}
+.dialog-wide {
+  max-width: 760px;
+}
+.dialog h2 {
+  margin-top: 0;
+}
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.error-text {
+  color: var(--danger);
+  font-size: 0.85rem;
+}
+
+/* Accessibility */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
