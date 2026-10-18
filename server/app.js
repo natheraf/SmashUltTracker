@@ -8,6 +8,8 @@ import { csrfGuard } from './middleware/csrf.js';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
 import { authRoutes } from './routes/auth.js';
 import { adminRoutes } from './routes/admin.js';
+import { trackerRoutes } from './routes/tracker.js';
+import { sseRoutes } from './routes/sse.js';
 
 export function createApp({ db, config }) {
   const app = express();
@@ -40,8 +42,23 @@ export function createApp({ db, config }) {
     res.json({ ok: true });
   });
 
+  // Public roster (character-select order) — used by the tracker picker and
+  // the home page's character grid.
+  app.get('/api/characters', (req, res) => {
+    const rows = db
+      .prepare(
+        'SELECT id, slug, name, series, is_dlc, is_echo FROM characters ORDER BY select_order',
+      )
+      .all();
+    res.json({
+      characters: rows.map((r) => ({ ...r, is_dlc: Boolean(r.is_dlc), is_echo: Boolean(r.is_echo) })),
+    });
+  });
+
   app.use('/api/auth', authRoutes(db, config));
   app.use('/api/admin', adminRoutes(db, config));
+  app.use('/api/tracker', trackerRoutes(db));
+  app.use('/api', sseRoutes());
 
   app.use('/api', notFoundHandler);
 

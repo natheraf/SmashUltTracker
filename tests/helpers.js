@@ -87,3 +87,23 @@ export async function registerStreamer(client, overrides = {}) {
   });
   return res;
 }
+
+/**
+ * Registers a streamer, approves them through the admin API, logs in and
+ * returns a logged-in client (plus a fresh admin client for assertions).
+ */
+export async function approvedStreamer(ctx, username = 'nairomk') {
+  await ctx.client.post('/api/auth/register', {
+    username,
+    password: 'password123',
+    display_name: 'Nai',
+    twitch_url: `https://twitch.tv/${username}`,
+  });
+  const id = ctx.db.prepare('SELECT id FROM users WHERE username = ?').get(username).id;
+  const admin = makeClient(ctx.base);
+  await admin.post('/api/auth/login', { username: 'admin', password: 'testadminpass1' });
+  await admin.post(`/api/admin/streamers/${id}/approve`, {});
+  const client = makeClient(ctx.base);
+  await client.post('/api/auth/login', { username, password: 'password123' });
+  return client;
+}

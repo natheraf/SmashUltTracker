@@ -74,6 +74,7 @@ CREATE TABLE streak_progress (
   wins                INTEGER NOT NULL DEFAULT 0,
   accumulated_seconds INTEGER NOT NULL DEFAULT 0,
   running_since       TEXT,
+  paused              INTEGER NOT NULL DEFAULT 0,
   zero_since          TEXT,
   -- bitmask: 1 = 10-win milestone sent, 2 = 25, 4 = 40
   milestones_reached  INTEGER NOT NULL DEFAULT 0,
@@ -113,6 +114,7 @@ CREATE TABLE ironman_runs (
   ended_at           TEXT,
   accumulated_seconds INTEGER NOT NULL DEFAULT 0,
   running_since      TEXT,
+  paused             INTEGER NOT NULL DEFAULT 0,
   zero_since         TEXT
 );
 CREATE INDEX idx_ironman_streamer ON ironman_runs(streamer_id, status);

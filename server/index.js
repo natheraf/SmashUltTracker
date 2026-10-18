@@ -2,6 +2,7 @@ import { createApp } from './app.js';
 import { loadConfig } from './config.js';
 import { openDb, runMigrations } from './db.js';
 import { bootstrapAdmin, seedCharacters, seedRoles } from './seedData.js';
+import { startFinalizeJob } from './jobs/finalizeTimers.js';
 
 const config = loadConfig();
 const db = openDb(config.dataDir);
@@ -9,6 +10,7 @@ runMigrations(db);
 seedRoles(db);
 seedCharacters(db);
 bootstrapAdmin(db, config);
+startFinalizeJob(db);
 
 const app = createApp({ db, config });
 const server = app.listen(config.port, () => {
