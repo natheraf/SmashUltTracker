@@ -25,23 +25,12 @@ export function createApp({ db, config }) {
 
   app.use(
     helmet({
-      contentSecurityPolicy: {
-        directives: {
-          defaultSrc: ["'self'"],
-          scriptSrc: ["'self'", 'https://challenges.cloudflare.com'],
-          styleSrc: ["'self'", "'unsafe-inline'"],
-          imgSrc: ["'self'", 'data:', 'https://i.ytimg.com'],
-          connectSrc: ["'self'", 'https://challenges.cloudflare.com'],
-          frameSrc: ["'self'", 'https://www.youtube-nocookie.com', 'https://challenges.cloudflare.com'],
-          objectSrc: ["'none'"],
-          baseUri: ["'self'"],
-          formAction: ["'self'"],
-        },
-      },
+      contentSecurityPolicy: false,
       crossOriginEmbedderPolicy: false,
       crossOriginOpenerPolicy: false,
       originAgentCluster: false,
       permissionsPolicy: false,
+      strictTransportSecurity: false,
     }),
   );
   app.use(express.json({ limit: '32kb' }));
