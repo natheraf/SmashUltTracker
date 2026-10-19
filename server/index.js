@@ -3,6 +3,7 @@ import { loadConfig } from './config.js';
 import { openDb, runMigrations } from './db.js';
 import { bootstrapAdmin, seedCharacters, seedRoles } from './seedData.js';
 import { startFinalizeJob } from './jobs/finalizeTimers.js';
+import { startVoteWinnerJob } from './jobs/voteWinners.js';
 
 const config = loadConfig();
 const db = openDb(config.dataDir);
@@ -11,6 +12,7 @@ seedRoles(db);
 seedCharacters(db);
 bootstrapAdmin(db, config);
 startFinalizeJob(db);
+startVoteWinnerJob(db);
 
 const app = createApp({ db, config });
 const server = app.listen(config.port, () => {

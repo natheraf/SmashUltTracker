@@ -159,3 +159,14 @@ export function requirePermission(perm) {
     next();
   };
 }
+
+/** Passes when the account holds at least one of the given permissions. */
+export function requireAnyPermission(...perms) {
+  return (req, res, next) => {
+    if (!req.user) return next(unauthorized());
+    if (!perms.some((perm) => req.perms.has(perm))) {
+      return next(forbidden(`Missing permission: ${perms.join(' | ')}`));
+    }
+    next();
+  };
+}

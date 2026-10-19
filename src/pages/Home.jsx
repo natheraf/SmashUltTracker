@@ -1,16 +1,19 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { api } from '../api.js';
+import { api, post } from '../api.js';
 import CharacterGrid from '../components/CharacterGrid.jsx';
+import CommunityVote from '../components/home/CommunityVote.jsx';
 import CharacterDialog from '../components/home/CharacterDialog.jsx';
 import { IronmanCard, StreakCard } from '../components/home/LiveCards.jsx';
 import Timeline from '../components/home/Timeline.jsx';
+import SubmitVodDialog from '../components/SubmitVodDialog.jsx';
 import { useSse } from '../hooks/useSse.js';
 import { timeAgo } from '../lib/format.js';
 
 /**
  * The public home page: who is live right now, the character-select grid for a
- * chosen streamer, per-fighter detail, and the community timeline. Everything
- * here is read-only; the tracker pages are the only writers.
+ * chosen streamer, per-fighter detail, the community vote and the timeline.
+ * Reading is open to everyone; the only writes here are the daily vote and VOD
+ * submissions, both of which land in a review queue.
  */
 export default function Home() {
   const [home, setHome] = useState(null);
@@ -19,6 +22,10 @@ export default function Home() {
   const [pickedStreamerId, setPickedStreamerId] = useState(null);
   const [progress, setProgress] = useState(null);
   const [dialog, setDialog] = useState(null);
+  const [standings, setStandings] = useState(null);
+  const [voteBusy, setVoteBusy] = useState(false);
+  const [voteError, setVoteError] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
 
   const ironmanTabId = tab.startsWith('ironman:') ? Number(tab.slice('ironman:'.length)) : null;
   const activeStreamerId =
@@ -39,19 +46,41 @@ export default function Home() {
       .catch(() => {});
   }, []);
 
+  const loadVotes = useCallback(() => api('/api/votes').then(setStandings), []);
+
   useEffect(() => {
     loadHome().catch(() => {});
-  }, [loadHome]);
+    loadVotes().catch(() => {});
+  }, [loadHome, loadVotes]);
 
   useEffect(() => {
     loadProgress(activeStreamerId).catch(() => setProgress(null));
   }, [activeStreamerId, loadProgress]);
 
-  // Any tracker or Ironman action changes who is live and what the grid shows.
+  // Any tracker or Ironman action changes who is live and what the grid shows;
+  // a vote (yours or someone else's) changes the ballot.
   useSse(() => {
     loadHome().catch(() => {});
     loadProgress(activeStreamerId).catch(() => {});
-  }, ['tracker', 'ironman']);
+    loadVotes().catch(() => {});
+  }, ['tracker', 'ironman', 'votes']);
+
+  const castVote = useCallback(
+    async (characterId) => {
+      setVoteBusy(true);
+      setVoteError(null);
+      try {
+        await post('/api/votes', { character_id: characterId });
+        await loadVotes();
+      } catch (err) {
+        setVoteError(err.message);
+        await loadVotes().catch(() => {});
+      } finally {
+        setVoteBusy(false);
+      }
+    },
+    [loadVotes],
+  );
 
   const openCharacter = useCallback(
     (id) => {
@@ -91,6 +120,9 @@ export default function Home() {
             Community tracker for the 50-win streak and Ironman challenges. Follow along live, or
             open a fighter to see how the run went.
           </p>
+          <button type="button" className="btn btn-sm home-submit-cta" onClick={() => setSubmitting(true)}>
+            Submit a VOD
+          </button>
         </div>
         {progress ? (
           <p className="home-hero-count">
@@ -220,7 +252,23 @@ export default function Home() {
         </>
       ) : null}
 
+      <CommunityVote
+        standings={standings}
+        busy={voteBusy}
+        error={voteError}
+        onVote={castVote}
+      />
+
       <Timeline />
+
+      {submitting ? (
+        <SubmitVodDialog
+          streamers={home.streamers}
+          characters={characters}
+          defaultStreamerId={activeStreamerId}
+          onClose={() => setSubmitting(false)}
+        />
+      ) : null}
 
       {dialog ? (
         <CharacterDialog

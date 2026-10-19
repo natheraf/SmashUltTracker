@@ -2,9 +2,14 @@ import { renderToString } from 'react-dom/server';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { describe, expect, it } from 'vitest';
 import CharacterGrid from '../src/components/CharacterGrid.jsx';
+import SubmissionsQueue from '../src/components/admin/SubmissionsQueue.jsx';
 import { IronmanCard, StreakCard } from '../src/components/home/LiveCards.jsx';
+import CommunityVote from '../src/components/home/CommunityVote.jsx';
 import Timeline from '../src/components/home/Timeline.jsx';
+import SubmitVodDialog from '../src/components/SubmitVodDialog.jsx';
 import IronmanPanel from '../src/components/tracker/IronmanPanel.jsx';
+import { AuthProvider } from '../src/context/AuthContext.jsx';
+import Admin from '../src/pages/Admin.jsx';
 import Overlay from '../src/pages/Overlay.jsx';
 
 /**
@@ -207,5 +212,147 @@ describe('home page pieces', () => {
     expect(html).toContain('char-cell is-completed');
     expect(html).toContain('is-selected');
     expect(html).not.toContain('char-picker-toolbar');
+  });
+});
+
+const voteStandings = {
+  utc_day: '2026-02-04',
+  days: 30,
+  candidates: [
+    { character: { id: 1, slug: 'mario', name: 'Mario' }, today_votes: 4, month_votes: 9 },
+    { character: { id: 2, slug: 'samus', name: 'Samus' }, today_votes: 1, month_votes: 3 },
+  ],
+  today: {
+    top: [{ character: { id: 1, slug: 'mario', name: 'Mario' }, today_votes: 4, month_votes: 9 }],
+    total: 5,
+  },
+  month: {
+    top: [
+      { character: { id: 1, slug: 'mario', name: 'Mario' }, today_votes: 4, month_votes: 9 },
+      { character: { id: 2, slug: 'samus', name: 'Samus' }, today_votes: 1, month_votes: 3 },
+    ],
+    total: 12,
+  },
+  my_vote: null,
+  winner: {
+    utc_day: '2026-02-03',
+    votes: 7,
+    character: { id: 2, slug: 'samus', name: 'Samus' },
+  },
+};
+
+describe('CommunityVote', () => {
+  it('renders the ballot, todays leaders and the last winner', () => {
+    const html = plain(render(<CommunityVote standings={voteStandings} onVote={() => {}} />));
+    expect(html).toContain('next?');
+    expect(html).toContain('Yesterday');
+    expect(html).toContain('Samus');
+    expect(html).toContain('7 votes on 2026-02-03');
+    expect(html).toContain('Last 30 days');
+    expect((html.match(/aria-pressed/g) || []).length).toBe(2);
+    expect(html).toContain('Pick the fighter you want to see next');
+  });
+
+  it('locks the ballot once the visitor has voted', () => {
+    const html = plain(
+      render(
+        <CommunityVote
+          standings={{ ...voteStandings, my_vote: 1 }}
+          busy={false}
+          onVote={() => {}}
+        />,
+      ),
+    );
+    expect(html).toContain('You voted for');
+    expect(html).toContain('vote-chip is-voted');
+    expect(html).toContain('Come back tomorrow');
+  });
+
+  it('explains an empty ballot and shows the vote error', () => {
+    const html = plain(
+      render(
+        <CommunityVote
+          standings={{
+            ...voteStandings,
+            candidates: [],
+            today: { top: [], total: 0 },
+            month: { top: [], total: 0 },
+            winner: null,
+          }}
+          error="You already voted today"
+          onVote={() => {}}
+        />,
+      ),
+    );
+    expect(html).toContain('nothing left to vote for');
+    expect(html).toContain('You already voted today');
+    expect(html).not.toContain('Yesterday');
+  });
+
+  it('shows a loading line without standings', () => {
+    expect(render(<CommunityVote standings={null} onVote={() => {}} />)).toContain('Loading the poll');
+  });
+});
+
+describe('SubmitVodDialog', () => {
+  const characters = [
+    { id: 1, slug: 'mario', name: 'Mario', series: 'Super Mario' },
+    { id: 2, slug: 'samus', name: 'Samus', series: 'Metroid' },
+  ];
+
+  it('renders the form for a single streamer', () => {
+    const html = plain(
+      render(
+        <SubmitVodDialog
+          streamers={[{ id: 1, display_name: 'Nai' }]}
+          characters={characters}
+          defaultStreamerId={1}
+          onClose={() => {}}
+        />,
+      ),
+    );
+    expect(html).toContain('Submit a VOD');
+    expect(html).toContain('Mario — Super Mario');
+    expect(html).toContain('Starts at');
+    expect(html).toContain('Send for review');
+    // One streamer needs no streamer picker.
+    expect(html).not.toContain('id="vod-streamer"');
+  });
+
+  it('lets a multi-streamer site pick who the VOD belongs to', () => {
+    const html = plain(
+      render(
+        <SubmitVodDialog
+          streamers={[
+            { id: 1, display_name: 'Nai' },
+            { id: 2, display_name: 'Other' },
+          ]}
+          characters={characters}
+          onClose={() => {}}
+        />,
+      ),
+    );
+    expect(html).toContain('id="vod-streamer"');
+    expect(html).toContain('Other');
+  });
+});
+
+describe('admin panels', () => {
+  it('renders the empty review queue with its shortcuts', () => {
+    const html = plain(render(<SubmissionsQueue />));
+    expect(html).toContain('VOD submissions');
+    expect(html).toContain('Nothing in this queue.');
+    expect(html).toContain('shortcuts:');
+    expect(html).toContain('Approve selected');
+  });
+
+  it('keeps the admin page from crashing without permissions', () => {
+    const html = render(
+      <AuthProvider>
+        <Admin />
+      </AuthProvider>,
+    );
+    expect(html).toContain('Admin');
+    expect(html).toContain('no admin permissions');
   });
 });

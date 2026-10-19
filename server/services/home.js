@@ -44,6 +44,11 @@ export function defaultPrimaryStreamerId(db) {
   return row ? row.id : null;
 }
 
+/** The configured primary streamer, or the first approved one. */
+export function primaryStreamerId(db) {
+  return getPrimaryStreamerId(db) ?? defaultPrimaryStreamerId(db);
+}
+
 /**
  * Mirrors the tracker's in-progress rule for reads that don't have a single
  * context yet: a heartbeat in the last 5 minutes AND (1+ win OR under 5
@@ -57,7 +62,7 @@ function isLive({ lastHeartbeat, wins, zeroSince }, now) {
 
 /** The home page's landing payload: live streak cards + active Ironman runs. */
 export function homeSnapshot(db, now = Date.now()) {
-  const primaryStreamerId = getPrimaryStreamerId(db) ?? defaultPrimaryStreamerId(db);
+  const primaryStreamer = primaryStreamerId(db);
 
   const streaks = db
     .prepare(
@@ -133,7 +138,7 @@ export function homeSnapshot(db, now = Date.now()) {
       };
     });
 
-  return { primary_streamer_id: primaryStreamerId, streamers: listStreamers(db), streaks, ironman };
+  return { primary_streamer_id: primaryStreamer, streamers: listStreamers(db), streaks, ironman };
 }
 
 /** One streamer's grid: live flag, partial streaks, completions, Ironman run. */

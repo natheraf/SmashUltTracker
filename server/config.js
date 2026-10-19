@@ -14,6 +14,10 @@ const schema = z.object({
     .transform((v) => v === 'true' || v === '1'),
   TURNSTILE_SITE_KEY: z.string().optional(),
   TURNSTILE_SECRET_KEY: z.string().optional(),
+  FETCH_YOUTUBE_TITLES: z
+    .string()
+    .default('true')
+    .transform((v) => v !== 'false' && v !== '0'),
 });
 
 export function loadConfig(env = process.env) {
@@ -37,6 +41,8 @@ export function loadConfig(env = process.env) {
     trustCloudflareHeader: c.TRUST_CLOUDFLARE_HEADER,
     turnstileSiteKey: c.TURNSTILE_SITE_KEY || null,
     turnstileSecretKey: c.TURNSTILE_SECRET_KEY || null,
+    // Never hit YouTube from tests: submissions there must stay offline and fast.
+    fetchYoutubeTitles: c.FETCH_YOUTUBE_TITLES && c.NODE_ENV !== 'test',
     sessionCookieName: 'sut_session',
     sessionDays: 30,
   };
