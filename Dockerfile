@@ -1,15 +1,23 @@
 FROM node:20.14.0-alpine AS builder
 WORKDIR /app
+# Install build tools for native modules
+RUN apk add --no-cache --virtual .build-deps python3 make g++ musl-dev
 COPY package*.json ./
 RUN npm ci
 COPY . .
 RUN npm run build
+# Clean up build dependencies
+RUN apk del .build-deps
 
 FROM node:20.14.0-alpine AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
+# Install build tools required for native modules (better-sqlite3)
+RUN apk add --no-cache --virtual .build-deps python3 make g++ musl-dev
 COPY package*.json ./
 RUN npm ci --omit=dev
+# Remove build dependencies
+RUN apk del .build-deps
 COPY --from=builder /app/server ./server
 COPY --from=builder /app/scripts ./scripts
 COPY --from=builder /app/seed ./seed
