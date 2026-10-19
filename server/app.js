@@ -15,6 +15,7 @@ import { publicRoutes } from './routes/public.js';
 import { sseRoutes } from './routes/sse.js';
 import { submissionRoutes } from './routes/submissions.js';
 import { shareRoutes } from './routes/share.js';
+import { voteRoutes } from './routes/votes.js';
 
 const IMAGE_FILE = /^[a-z0-9-]+\.png$/;
 
