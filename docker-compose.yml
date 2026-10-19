@@ -1,0 +1,22 @@
+services:
+  smashulttracker:
+    build: .
+    image: smashulttracker:latest
+    container_name: smashulttracker
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DATA_DIR=/data
+      - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:?set ADMIN_PASSWORD}
+      - IP_HASH_SALT=${IP_HASH_SALT:?set IP_HASH_SALT}
+      - CLIENT_IP_HEADER=${CLIENT_IP_HEADER:-CF-Connecting-IP}
+      - TRUST_CLOUDFLARE_HEADER=${TRUST_CLOUDFLARE_HEADER:-false}
+    volumes:
+      - smashulttracker-data:/data
+    restart: unless-stopped
+
+volumes:
+  smashulttracker-data:

@@ -14,7 +14,7 @@ import { overlayRoutes } from './routes/overlay.js';
 import { publicRoutes } from './routes/public.js';
 import { sseRoutes } from './routes/sse.js';
 import { submissionRoutes } from './routes/submissions.js';
-import { voteRoutes } from './routes/votes.js';
+import { shareRoutes } from './routes/share.js';
 
 const IMAGE_FILE = /^[a-z0-9-]+\.png$/;
 
@@ -91,6 +91,7 @@ export function createApp({ db, config }) {
   app.use('/api', publicRoutes(db));
   app.use('/api/submissions', submissionRoutes(db, config));
   app.use('/api/votes', voteRoutes(db, config));
+  app.use('/share', shareRoutes(db));
   app.use('/api/auth', authRoutes(db, config));
   app.use('/api/admin', adminRoutes(db, config));
   app.use('/api/tracker', trackerRoutes(db));
