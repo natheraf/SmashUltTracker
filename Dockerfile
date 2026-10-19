@@ -23,6 +23,7 @@ COPY --from=builder /app/scripts ./scripts
 COPY --from=builder /app/seed ./seed
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/server/fonts ./server/fonts
+COPY --from=builder /app/migrations ./migrations
 EXPOSE 3000
 VOLUME ["/data"]
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 CMD wget -q -O /dev/null http://127.0.0.1:3000/api/health || exit 1
