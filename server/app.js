@@ -21,6 +21,15 @@ const IMAGE_FILE = /^[a-z0-9-]+\.png$/;
 
 export function createApp({ db, config }) {
   const app = express();
+  if (config.trustProxy === true) {
+    app.set('trust proxy', true);
+  } else if (config.trustProxy === false) {
+    // no-op
+  } else if (typeof config.trustProxy === 'number') {
+    app.set('trust proxy', config.trustProxy);
+  } else {
+    app.set('trust proxy', true);
+  }
   app.disable('x-powered-by');
 
   app.use(

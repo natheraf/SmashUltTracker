@@ -12,6 +12,15 @@ const schema = z.object({
     .string()
     .default('false')
     .transform((v) => v === 'true' || v === '1'),
+  TRUST_PROXY: z
+    .string()
+    .default('auto')
+    .transform((v) => {
+      const val = v.trim().toLowerCase();
+      if (val === 'true' || val === '1') return true;
+      if (val === 'false' || val === '0') return false;
+      return 'auto';
+    }),
   TURNSTILE_SITE_KEY: z.string().optional(),
   TURNSTILE_SECRET_KEY: z.string().optional(),
   FETCH_YOUTUBE_TITLES: z
@@ -29,6 +38,10 @@ export function loadConfig(env = process.env) {
     throw new Error(`Invalid environment configuration: ${issues}`);
   }
   const c = parsed.data;
+  let trustProxy = c.TRUST_PROXY;
+  if (trustProxy === 'auto') {
+    trustProxy = c.NODE_ENV === 'production';
+  }
   return {
     env: c.NODE_ENV,
     isProduction: c.NODE_ENV === 'production',
@@ -39,6 +52,7 @@ export function loadConfig(env = process.env) {
     ipHashSalt: c.IP_HASH_SALT,
     clientIpHeader: c.CLIENT_IP_HEADER,
     trustCloudflareHeader: c.TRUST_CLOUDFLARE_HEADER,
+    trustProxy,
     turnstileSiteKey: c.TURNSTILE_SITE_KEY || null,
     turnstileSecretKey: c.TURNSTILE_SECRET_KEY || null,
     // Never hit YouTube from tests: submissions there must stay offline and fast.
