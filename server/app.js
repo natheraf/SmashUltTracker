@@ -39,6 +39,9 @@ export function createApp({ db, config }) {
         },
       },
       crossOriginEmbedderPolicy: false,
+      crossOriginOpenerPolicy: false,
+      originAgentCluster: false,
+      permissionsPolicy: false,
     }),
   );
   app.use(express.json({ limit: '32kb' }));
