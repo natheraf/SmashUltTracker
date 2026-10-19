@@ -135,7 +135,7 @@ async function main() {
         failed.push(char.slug);
         continue;
       }
-      const buffer = toPng(await download(found.url), found.mime);
+      const buffer = await toPng(await download(found.url), found.mime);
       fs.writeFileSync(dest, buffer);
       console.log(`ok (${found.via})`);
       downloaded++;

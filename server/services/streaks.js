@@ -5,24 +5,33 @@ import { badRequest } from '../errors.js';
 
 export const MILESTONES = [10, 25, 40];
 
+const MILESTONE_BITS = { 10: 1, 25: 2, 40: 4 };
+
+/**
+ * Cumulative milestone bitmask for a win count: reaching a higher milestone
+ * implies the lower ones were reached too, so e.g. 30 wins returns 3.
+ */
 export function milestoneBit(wins) {
-  if (wins >= 40) return 4;
-  if (wins >= 25) return 2;
-  if (wins >= 10) return 1;
-  return 0;
+  let bits = 0;
+  for (const milestone of MILESTONES) {
+    if (wins >= milestone) bits |= MILESTONE_BITS[milestone];
+  }
+  return bits;
 }
 
 /**
  * Applies milestone bookkeeping after a win count change. `newWins` is the
- * count *before* the win. Returns milestone values newly crossed (for the
- * timeline event), or [] when none. The bitmask keeps fired milestones from
- * repeating after a correction via /set.
+ * count *after* the change and `oldWins` the count before it. Returns the
+ * milestones newly crossed (for the timeline event), or [] when none. A
+ * milestone whose bit is already recorded never fires again, so a correction
+ * that dips below a milestone and climbs back does not repeat the event.
  */
 export function checkMilestones(db, streak, newWins, oldWins, at = nowIso()) {
-  const fired = MILESTONES.filter((m) => newWins >= m && oldWins < m);
+  const fired = MILESTONES.filter(
+    (m) => newWins >= m && oldWins < m && !(streak.milestones_reached & MILESTONE_BITS[m]),
+  );
   if (!fired.length) return [];
-  const newBits = milestoneBit(newWins);
-  const bits = streak.milestones_reached | newBits;
+  const bits = streak.milestones_reached | milestoneBit(newWins);
   if (bits !== streak.milestones_reached) {
     db.prepare(
       `UPDATE streak_progress SET milestones_reached = ?, updated_at = ?

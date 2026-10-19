@@ -172,8 +172,9 @@ function requireSelectedCharacter(db, streamerId) {
 
 function requireSelectedStreak(db, streamerId) {
   const { ts } = requireSelectedCharacter(db, streamerId);
-  const row = getStreak(db, streamerId, ts.selected_character_id);
-  if (!row) throw badRequest('No streak in progress for this character', 'no_active_streak');
+  // A selected fighter may not have a row yet (selection does not create one).
+  // Create it on demand so set/reset/pause also work before the first +1.
+  const row = ensureStreakRow(db, streamerId, ts.selected_character_id);
   return { ts, row };
 }
 

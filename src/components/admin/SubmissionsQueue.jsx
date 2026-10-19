@@ -72,12 +72,12 @@ export default function SubmissionsQueue() {
         note: note.trim() || undefined,
       });
       const failed = result.results.filter((row) => row.error);
+      // load() clears the error on success, so surface any partial failures
+      // after it has refreshed the queue.
+      await load();
       if (failed.length) {
         setError(`${failed.length} of ${ids.length} could not be reviewed: ${failed[0].message}`);
-      } else {
-        setError(null);
       }
-      await load();
     } catch (err) {
       setError(err.message);
     } finally {
@@ -89,6 +89,7 @@ export default function SubmissionsQueue() {
   // field never triggers them.
   useEffect(() => {
     const onKey = (event) => {
+      if (busy) return;
       if (event.ctrlKey || event.metaKey || event.altKey) return;
       const tag = event.target?.tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
@@ -109,7 +110,7 @@ export default function SubmissionsQueue() {
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selected, note]);
+  }, [selected, note, busy]);
 
   const toggle = (id) =>
     setSelected((prev) => {

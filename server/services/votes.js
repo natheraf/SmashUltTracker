@@ -79,11 +79,15 @@ export function voteStandings(
   });
 
   const byMonth = (a, b) => b.month_votes - a.month_votes || a.character.id - b.character.id;
+  const byToday = (a, b) => b.today_votes - a.today_votes || a.character.id - b.character.id;
 
   const candidates = rows
     .filter((row) => !completed.has(row.id))
     .map(shape);
-  const todayTop = candidates.filter((row) => row.today_votes > 0).slice(0, top);
+  const todayTop = candidates
+    .filter((row) => row.today_votes > 0)
+    .sort(byToday)
+    .slice(0, top);
   const monthTop = rows
     .map(shape)
     .filter((row) => row.month_votes > 0)

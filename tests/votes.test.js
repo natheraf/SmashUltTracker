@@ -63,6 +63,20 @@ describe('community votes', () => {
     expect(standings.body.today.top[0].today_votes).toBe(1);
   });
 
+  it('ranks the day’s leaders by votes, not roster order', async () => {
+    const ctx = await setup(it);
+    const samus = ctx.charId('samus'); // earlier in the select order
+    const kirby = ctx.charId('kirby'); // later in the select order
+
+    seedVote(ctx.db, { characterId: samus, ipHash: 'a', utcDay: utcDay() });
+    seedVote(ctx.db, { characterId: kirby, ipHash: 'b', utcDay: utcDay() });
+    seedVote(ctx.db, { characterId: kirby, ipHash: 'c', utcDay: utcDay() });
+
+    const res = await ctx.anon.get('/api/votes');
+    expect(res.body.today.top.map((row) => row.character.slug)).toEqual(['kirby', 'samus']);
+    expect(res.body.today.top[0].today_votes).toBe(2);
+  });
+
   it('validates the character', async () => {
     const ctx = await setup(it);
     expect((await ctx.anon.post('/api/votes', { character_id: 9999 })).status).toBe(400);
@@ -76,18 +90,12 @@ describe('community votes', () => {
     await ctx.streamer.post('/api/tracker/streak/set', { wins: 50 });
 
     await ctx.admin.post('/api/admin/settings/primary-streamer', { user_id: ctx.streamerId });
-    // Ensure completion exists for primary streamer (tracker already creates it; be explicit if needed)
+    // /streak/set works without a prior +1: it creates the row and, at 50 wins,
+    // records the completion that removes samus from the ballot.
     const hasComp = ctx.db
       .prepare('SELECT 1 FROM completions WHERE streamer_id = ? AND character_id = ?')
       .get(ctx.streamerId, samus);
-    if (!hasComp) {
-      ctx.db
-        .prepare(
-          `INSERT INTO completions (streamer_id, character_id, completed_at, duration_seconds, attempts_count, created_at)
-           VALUES (?, ?, ?, 0, 1, ?)`,
-        )
-        .run(ctx.streamerId, samus, new Date().toISOString(), new Date().toISOString());
-    }
+    expect(hasComp).toBeTruthy();
 
     const res = await ctx.anon.get('/api/votes');
     const hasSamus = res.body.candidates.some((row) => row.character.id === samus);

@@ -2,6 +2,7 @@ import { once } from 'node:events';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { onTestFinished } from 'vitest';
 import { createApp } from '../server/app.js';
 import { loadConfig } from '../server/config.js';
 import { openDb, runMigrations } from '../server/db.js';
@@ -34,8 +35,15 @@ export async function setupTestServer(t) {
     db.close();
     fs.rmSync(dir, { recursive: true, force: true });
   };
-  if (typeof t.onTestFinished === 'function') t.onTestFinished(cleanup);
-  else if (typeof t.after === 'function') t.after(cleanup);
+  // Prefer vitest's ambient hook: it works whether the caller passes the test
+  // context or (as some test files do) the imported `it` collector, which has
+  // neither onTestFinished nor after. Fall back for non-vitest callers.
+  try {
+    onTestFinished(cleanup);
+  } catch {
+    if (typeof t?.onTestFinished === 'function') t.onTestFinished(cleanup);
+    else if (typeof t?.after === 'function') t.after(cleanup);
+  }
   return { db, config, base, client: makeClient(base), cleanup };
 }
 

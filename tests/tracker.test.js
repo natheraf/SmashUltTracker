@@ -93,6 +93,20 @@ describe('streak wins', () => {
     milestones = db.prepare("SELECT * FROM timeline_events WHERE type = 'milestone'").all();
     expect(milestones).toHaveLength(2);
   });
+
+  it('records the lower milestone bits on a partial start', async () => {
+    await streamer.post('/api/tracker/streak/select', { character_id: mario() });
+    const res = await streamer.post('/api/tracker/streak/start', { wins: 30, seconds: 0 });
+    // 30 wins means the 10 and 25 milestones were reached (bits 1 | 2).
+    expect(res.body.state.active_streak.milestones_reached).toBe(3);
+  });
+
+  it('set writes exact wins before the first +1', async () => {
+    await streamer.post('/api/tracker/streak/select', { character_id: mario() });
+    const res = await streamer.post('/api/tracker/streak/set', { wins: 5 });
+    expect(res.status).toBe(200);
+    expect(res.body.state.active_streak.wins).toBe(5);
+  });
 });
 
 describe('streak loss', () => {

@@ -19,7 +19,11 @@ export default function StreakPanel({ state, act, busy, characters, onCelebrate 
   const [startTime, setStartTime] = useState('0:00');
 
   const streak = state.active_streak;
-  const character = streak ? characters.find((c) => c.id === streak.character_id) : null;
+  // A freshly selected fighter has no streak_progress row yet, so fall back to
+  // the current selection to find the character. Without this the panel would
+  // report "no fighter selected" and hide the controls that create the row.
+  const selectedId = streak?.character_id ?? state.selected_character_id ?? null;
+  const character = characters.find((c) => c.id === selectedId) || null;
   const elapsed = useTicker(streak?.elapsed_seconds || 0, Boolean(streak?.running));
   const wins = streak?.wins || 0;
 

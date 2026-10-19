@@ -8,6 +8,7 @@ import CommunityVote from '../src/components/home/CommunityVote.jsx';
 import Timeline from '../src/components/home/Timeline.jsx';
 import SubmitVodDialog from '../src/components/SubmitVodDialog.jsx';
 import IronmanPanel from '../src/components/tracker/IronmanPanel.jsx';
+import StreakPanel from '../src/components/tracker/StreakPanel.jsx';
 import { AuthProvider } from '../src/context/AuthContext.jsx';
 import Admin from '../src/pages/Admin.jsx';
 import Overlay from '../src/pages/Overlay.jsx';
@@ -127,6 +128,31 @@ describe('IronmanPanel', () => {
     expect(html).toContain('Ready to draw');
     expect(html).toContain('Draw a random fighter');
     expect(html).not.toContain('Win with');
+  });
+});
+
+describe('StreakPanel', () => {
+  it('shows controls for a selected fighter that has no streak row yet', () => {
+    const html = plain(
+      render(
+        <StreakPanel
+          state={{
+            mode: 'streak',
+            selected_character_id: 1,
+            streaks: [],
+            active_streak: null,
+            active_attempt: null,
+          }}
+          act={async () => ({})}
+          busy={false}
+          characters={[{ id: 1, slug: 'mario', name: 'Mario' }]}
+          onCelebrate={() => {}}
+        />,
+      ),
+    );
+    expect(html).toContain('Mario');
+    expect(html).toContain('+1 win');
+    expect(html).not.toContain('No fighter selected');
   });
 });
 
